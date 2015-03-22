@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+# Convert ascii file exported from ArcMap to ascii file CATIA can imported (X,Y,Z)
+
+import sys
+
+if len(sys.argv) != 2:
+	print >> sys.stderr, "Usage %s <ArcGIS_ASCII_File>\n" % (sys.argv[0])
+	sys.exit(1)
+
+f = open(sys.argv[1])
+lines = f.readlines()
+
+info_num=6
+ncols=float(lines[0].split()[1])
+nrows=float(lines[1].split()[1])
+xllcorner=float(lines[2].split()[1]) # x coordinate of lower left corner of the lower left cell
+yllcorner=float(lines[3].split()[1]) # y coordinate of lower left corner of the lower left cell
+cellsize=float(lines[4].split()[1])
+nodata_value=float(lines[5].split()[1])
+
+vertical_exaggeration_ratio=1
+xy_exaggeration_ration=1
+offset=0
+total=0
+ny=nrows-1
+for i in range(info_num, len(lines)):
+    data=lines[i].split()
+    y=yllcorner + ny*cellsize
+    
+    nx=0
+    for d in data:
+        x=xllcorner + nx*cellsize
+        if float(d) != nodata_value:
+			if offset == 1:
+				print "%f,%f,%f" % ((x-xllcorner)*xy_exaggeration_ration, (y-yllcorner)*xy_exaggeration_ration, float(d)*vertical_exaggeration_ratio)
+			else:
+				print "%f,%f,%f" % (x*xy_exaggeration_ration, y*xy_exaggeration_ration, float(d)*vertical_exaggeration_ratio)
+			total=total+1
+        nx=nx+1
+    ny=ny-1
+
+#print >> sys.stderr, "ny=%d, nx=%d" % (ny, nx)
+print >> sys.stderr, "Processed: %d points." % total
+f.close()
